@@ -1,0 +1,18 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "SQL_CONNECTION_STRING": "",
+    "RECEIPT_STORAGE_CONNECTION_STRING": "",
+    "RECEIPT_CONTAINER": "private-order-receipts",
+    "ADMIN_USERNAME": "",
+    "ADMIN_PASSWORD_HASH": "",
+    "SESSION_SIGNING_SECRET": "",
+    "COOKIE_SECURE": "false",
+    "CREDENTIAL_ENCRYPTION_KEY": "",
+    "ENTITLEMENT_PRIVATE_KEY": "",
+    "INSTALLER_BLOB_NAME": "",
+    "WHATSAPP_ENABLED": "false"
+  }
+}

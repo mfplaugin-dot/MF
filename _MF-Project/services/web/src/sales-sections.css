@@ -1,0 +1,21 @@
+.install-section{display:grid;grid-template-columns:.8fr 1.2fr;gap:64px;border-top:1px solid var(--line)}
+.install-section .section-intro p{max-width:390px}
+.install-content{display:grid;gap:24px}
+.requirements-card{padding:22px;border:1px solid var(--line);background:var(--panel)}
+.requirements-card h3{margin:0 0 16px;font-size:15px}
+.requirements-card ul{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+.requirements-card li,.install-steps p,.faq-list p{color:var(--muted);font-size:12px;line-height:1.8}
+.requirements-card li:before{content:"";display:inline-block;width:6px;height:6px;margin-inline-end:10px;border-radius:50%;background:var(--acid)}
+.install-steps{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.install-steps li{display:grid;grid-template-columns:32px 1fr;gap:14px;align-items:start;padding:14px 0;border-bottom:1px solid var(--line)}
+.install-steps li>span{font:10px var(--mono);color:var(--acid)}
+.install-steps p{margin:0}
+.faq-section{display:grid;grid-template-columns:.8fr 1.2fr;gap:64px;border-top:1px solid var(--line)}
+.faq-list{display:grid;align-content:start}
+.faq-list details{border-bottom:1px solid var(--line);padding:18px 0}
+.faq-list summary{cursor:pointer;font-size:13px;font-weight:600;list-style:none}
+.faq-list summary::-webkit-details-marker{display:none}
+.faq-list summary:after{content:"+";float:inline-end;color:var(--acid);font:18px var(--mono)}
+.faq-list details[open] summary:after{content:"−"}
+.faq-list p{margin:12px 0 0}
+@media(max-width:800px){.install-section,.faq-section{grid-template-columns:1fr;gap:28px}}
