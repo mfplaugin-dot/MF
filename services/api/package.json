@@ -1,0 +1,26 @@
+{
+  "name": "mf-sales-api",
+  "private": true,
+  "version": "0.1.0",
+  "main": "dist/src/functions/*.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node --test dist/test/*.test.js",
+    "start": "func start",
+    "migrate": "npm run build && node dist/src/migrate.js"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.7.2",
+    "@azure/storage-blob": "^12.27.0",
+    "mssql": "^11.0.1"
+  },
+  "overrides": {
+    "@azure/identity": "4.13.0",
+    "uuid": "^11.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "@types/mssql": "^9.1.8",
+    "typescript": "^5.7.3"
+  }
+}
