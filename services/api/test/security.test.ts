@@ -35,6 +35,6 @@ test("fulfillment encryption is authenticated and rejects tampering", () => {
 });
 
 test("catalog plan values and device limits are fixed to the approved offer", () => {
-  assert.deepEqual(plans.monthly, { price: 200, deviceLimit: 1, durationDays: 30 });
-  assert.deepEqual(plans.lifetime, { price: 1500, deviceLimit: 3, durationDays: null });
+  assert.deepEqual(plans.monthly, { price: 350, deviceLimit: 1, durationDays: 30 });
+  assert.deepEqual(plans.lifetime, { price: 1500, deviceLimit: 1, durationDays: null });
 });

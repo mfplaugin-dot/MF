@@ -1,0 +1,17 @@
+.auth-form{display:grid;gap:14px;margin:20px 0;padding:18px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025)}
+.auth-form label,.order-row>label{display:grid;gap:7px}
+.auth-form input,.order-row>label input{width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:inherit}
+.consent{display:flex!important;align-items:flex-start;gap:10px}
+.consent input{width:auto;min-width:16px;margin-top:4px;accent-color:var(--acid)}
+.support-whatsapp{border:0;background:transparent;color:inherit;padding:0}
+.product-picker{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 24px}
+.admin-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0}
+.admin-module{display:grid;gap:18px;margin-top:16px}
+.admin-form{display:grid;gap:14px;padding:20px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025)}
+.admin-form label,.admin-module>label{display:grid;gap:7px}
+.admin-form input,.admin-form textarea,.admin-form select,.admin-module select,.order-row select{width:100%;min-height:42px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:inherit}
+.admin-form textarea{resize:vertical;font-family:var(--mono,monospace);font-size:13px}
+.plans-list{display:grid;gap:8px;width:100%}
+.plan-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;border-top:1px solid var(--line)}
+.audit-entry{white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.admin-module details pre{white-space:pre-wrap;overflow-wrap:anywhere;max-width:min(70vw,700px)}

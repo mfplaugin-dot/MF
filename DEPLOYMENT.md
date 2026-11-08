@@ -1,55 +1,38 @@
-# Production deployment
+# Website build and deployment
 
-The website is prepared for GitHub Pages at `https://mf.mahmoudmostafa.online/`.
-The repository must be pushed to GitHub before its Pages workflow can run. This
-workspace has no Git repository or remote configured, so it has not been
-published.
+The existing custom domain is `https://mf.mahmoudmostafa.online/`. The existing
+Jekyll workflow deploys from the repository root on `main`; it remains
+unchanged. Do not merge this draft PR or replace the live site as part of
+Staging integration.
 
-## GitHub Pages frontend
+## Staging Vite artifact
 
-1. Push this project to a GitHub repository, preserving `.github/workflows/deploy-pages.yml`.
-2. In repository **Settings → Pages**, select **GitHub Actions** as the build and
-   deployment source.
-3. In **Settings → Secrets and variables → Actions → Variables**, add
-   `API_ORIGIN` with the HTTPS origin of the production API, without a path. For
-   example, use the API custom domain you have actually configured in Azure.
-   Do not use the website origin or an unconfigured example hostname.
-4. Configure DNS for `mf.mahmoudmostafa.online` to point to the GitHub Pages
-   site, verify the custom domain in GitHub, and enable HTTPS. The checked-in
-   `services/web/public/CNAME` is copied into the Pages artifact.
-5. Push to `main` or run **Deploy website to GitHub Pages** manually. The
-   workflow fails rather than publishing if `API_ORIGIN` is missing or is not
-   HTTPS.
+`.github/workflows/vite-staging-artifact.yml` builds only the Vite app from
+`services/web` and uploads a short-lived artifact. It has no deployment job and
+does not publish to GitHub Pages. Configure the repository Actions variable
+`MF_STAGING_PUBLISHABLE_KEY` with the Staging publishable/anon key to make
+preview builds connect to Staging. The key is public client configuration; do
+not use the service-role key. Local builds may use `services/web/.env.local`,
+which is ignored by Git. `services/web/public/CNAME` preserves the existing
+custom-domain file in a future artifact. Root-path hosting is configured for
+that domain.
 
-## API and browser security
+To build locally:
 
-GitHub Pages serves only the frontend; it does not run the Azure Functions API,
-SQL database, or private receipt storage. Before enabling the storefront for
-real orders:
+```powershell
+cd services/web
+npm ci
+npm run build
+```
 
-1. Deploy `services/api` as an Azure Functions Node.js app and configure its
-   supported Node runtime.
-2. Provision Azure SQL and private Blob Storage, apply the reviewed migration
-   in `database/migrations/`, and configure the API's database, storage, admin,
-   encryption, session-signing, and entitlement-signing settings in Azure
-   application settings/Key Vault. Use independently generated production
-   secrets; never put them in the website bundle or GitHub Pages variables.
-3. Bind and verify an HTTPS API custom domain under
-   `mf.mahmoudmostafa.online` (for example, a dedicated `api` subdomain). This
-   keeps the admin session cookie same-site while the UI and API remain
-   cross-origin. Set `COOKIE_SECURE=true`.
-4. Configure Azure Functions CORS to allow exactly
-   `https://mf.mahmoudmostafa.online`, with credentials enabled. Never use a
-   wildcard origin with credentialed requests. Verify preflight requests for
-   `Authorization` and receipt uploads before release.
-5. Add the verified API origin as the GitHub Actions `API_ORIGIN` variable and
-   redeploy the frontend.
-6. Before accepting money, complete the remaining backend production controls:
-   trusted-proxy rate limiting, CSRF/origin protections, approved retention
-   policy, recovery and subscription-renewal workflows, authorized payment
-   setup, and a verified installer release. Until then, the app must not be
-   presented as a functioning production checkout or license-delivery service.
+Inspect `services/web/dist` as a preview artifact only. Switching the live Pages
+workflow to this artifact requires a separate, explicitly approved release and
+rollback plan.
 
-Local development continues to use the Vite `/api` proxy to
-`http://127.0.0.1:7071`. `VITE_API_ORIGIN` is a build-time public URL, not a
-secret.
+## Legacy Azure rollback/reference
+
+The Azure API project in `services/api` is retained as a rollback/reference
+implementation; the Vite Staging frontend uses Supabase Auth and Edge
+Functions. Do not provision, migrate, or deploy Azure as part of this Staging
+release candidate. Do not remove the legacy implementation until backend
+parity, integration tests, and an approved rollback plan exist.

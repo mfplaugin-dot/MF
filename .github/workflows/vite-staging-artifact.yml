@@ -1,0 +1,41 @@
+name: Build Staging website artifact
+
+on:
+  push:
+    branches: [mf-staging-completion]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: https://bgyplclmucmkmajilhhs.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.MF_STAGING_PUBLISHABLE_KEY }}
+      VITE_SUPPORT_EMAIL: mf.plaugin@gmail.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: services/web/package-lock.json
+      - name: Install dependencies
+        working-directory: services/web
+        run: npm ci
+      - name: Build Vite site
+        working-directory: services/web
+        run: npm run build
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mf-staging-website
+          path: services/web/dist/
+          if-no-files-found: error
+          retention-days: 7

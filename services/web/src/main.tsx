@@ -5,5 +5,6 @@ import "./styles.css";
 import "./chat.css";
 import "./sales-sections.css";
 import "./mahmoud-theme.css";
+import "./auth.css";
 
 createRoot(document.getElementById("root")!).render(<React.StrictMode><App /></React.StrictMode>);

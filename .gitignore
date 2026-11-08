@@ -1,0 +1,9 @@
+node_modules/
+**/node_modules/
+**/dist/
+**/coverage/
+supabase/.temp/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo

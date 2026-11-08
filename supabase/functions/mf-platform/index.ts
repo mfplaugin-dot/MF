@@ -132,8 +132,19 @@ async function catalog(base: string, key: string): Promise<any> {
 }
 async function createLead(request: Request, base: string, key: string, body: Record<string, unknown>): Promise<Response> {
   const slug = typeof body.productSlug === "string" ? body.productSlug : "mf-plugin";
-  const products = await rest(base, key, "mf_products?select=id&slug=eq." + encodeURIComponent(slug) + "&status=eq.active&limit=1");
+  const products = await rest(base, key, "mf_products?select=id,content&slug=eq." + encodeURIComponent(slug) + "&status=eq.active&limit=1");
   if (!products?.length) return json(request, 404, { error: "Product not found." });
+  const content = products[0].content && typeof products[0].content === "object" ? products[0].content : {};
+  const notice = content.privacyNotice;
+  const hasNotice = typeof notice === "string"
+    ? Boolean(notice.trim())
+    : !!notice && typeof notice === "object" &&
+      [notice.en, notice.ar].some((value) => typeof value === "string" && value.trim().length > 0);
+  const privacyVersion = typeof content.privacyNoticeVersion === "string" ? content.privacyNoticeVersion.trim() : "";
+  if (!hasNotice || !privacyVersion || privacyVersion.length > 40) return json(request, 409, { error: "The approved privacy notice is not configured for this product." });
+  if (body.privacyAccepted !== true || body.privacyNoticeVersion !== privacyVersion) {
+    return json(request, 400, { error: "Acknowledge the current privacy notice before submitting contact details." });
+  }
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const phone = typeof body.phone === "string" ? body.phone.trim() : "";
   const fullName = typeof body.fullName === "string" ? body.fullName.trim() : "";
@@ -148,7 +159,7 @@ async function createLead(request: Request, base: string, key: string, body: Rec
     locale: body.locale === "en" ? "en" : "ar",
     source: typeof body.source === "string" ? body.source.slice(0, 80) : "website",
     status: "new", marketing_consent: consent, consent_at: consent ? new Date().toISOString() : null,
-    privacy_notice_version: typeof body.privacyNoticeVersion === "string" ? body.privacyNoticeVersion.slice(0, 40) : null,
+    privacy_notice_version: privacyVersion.slice(0, 40),
   };
   const created = await rest(base, key, "mf_checkout_leads?select=id,product_id,status,created_at", {
     method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(payload),
@@ -250,6 +261,25 @@ async function orderStatus(request: Request, base: string, key: string, user: an
   return json(request, 200, { status:order.status,reviewNote:order.review_note||null,plan:order.plan,priceEgp:Number(order.amount_minor)/100,currency:order.currency,
     productId:order.product_id,messages:(messages||[]).map((m:any)=>({sender:m.sender_role,message:m.message,createdAt:m.created_at})) });
 }
+async function orderList(request: Request, base: string, key: string, user: any): Promise<Response> {
+  const rows = await rest(base, key, "mf_license_orders?select=id,plan,status,created_at,reviewed_at,review_note,product_id,plan_id,amount_minor,currency,receipt_path&account_id=eq." +
+    encodeURIComponent(user.id) + "&order=created_at.desc&limit=100");
+  return json(request, 200, {
+    orders: (rows || []).map((order: any) => ({
+      id: order.id,
+      plan: order.plan,
+      status: order.status,
+      createdAt: order.created_at,
+      reviewedAt: order.reviewed_at,
+      reviewNote: order.review_note || null,
+      productId: order.product_id,
+      planId: order.plan_id,
+      price: Number(order.amount_minor) / 100,
+      currency: order.currency,
+      receiptSubmitted: !!order.receipt_path,
+    })),
+  });
+}
 async function adminOrders(base: string, key: string, body: Record<string, unknown>): Promise<any> {
   const status = typeof body.status === "string" ? body.status : "";
   const allowed = ["uploading","pending","approved","rejected","upload_failed"];
@@ -347,7 +377,7 @@ async function adminAction(request: Request, base: string, key: string, actor: a
     const deviceLimit=Number(body.deviceLimit||1);
     if(!isUuid(productId)||! /^[a-z0-9][a-z0-9_-]{0,39}$/.test(code)||!displayName||displayName.length>120||
       !Number.isFinite(price)||price<0||price>10000000||!Number.isInteger(deviceLimit)||deviceLimit<1||deviceLimit>20||
-      (billingType==="monthly"&&(!Number.isInteger(durationDays)||durationDays<1||durationDays>366))) {
+      (billingType==="monthly"&&(typeof durationDays!=="number"||!Number.isInteger(durationDays)||durationDays<1||durationDays>366))) {
       return json(request,400,{error:"Invalid product plan details."});
     }
     const payload={product_id:productId,code,display_name:displayName,amount_minor:Math.round(price*100),currency:"EGP",
@@ -358,15 +388,15 @@ async function adminAction(request: Request, base: string, key: string, actor: a
     return json(request,200,{plan:rows?.[0]||null});
   }
   if (route === "admin/update-lead") {
-    if(!isUuid(body.leadId)||!["new","contacted","checkout_started","converted","lost"].includes(String(body.status||""))) {
+    if(!isUuid(body.leadId)||!["new","contacted","checkout_started","lost"].includes(String(body.status||""))) {
       return json(request,400,{error:"A valid lead and status are required."});
     }
     const now=new Date().toISOString();
-    const rows=await rest(base,key,"mf_checkout_leads?id=eq."+body.leadId,{
+    const rows=await rest(base,key,"mf_checkout_leads?id=eq."+body.leadId+"&status=neq.converted",{
       method:"PATCH",headers:{Prefer:"return=representation"},
-      body:JSON.stringify({status:body.status,converted_at:body.status==="converted"?now:null,updated_at:now,last_seen_at:now}),
+      body:JSON.stringify({status:body.status,updated_at:now,last_seen_at:now}),
     });
-    if(!rows?.length) return json(request,404,{error:"Lead not found."});
+    if(!rows?.length) return json(request,404,{error:"Lead not found or already converted."});
     return json(request,200,{lead:rows[0]});
   }
   if (route === "admin/order-messages") {
@@ -438,8 +468,10 @@ async function adminAction(request: Request, base: string, key: string, actor: a
     return json(request,result===true?200:404,{ok:result===true});
   }
   if (route==="admin/suspend-account"||route==="admin/reactivate-account") {
+    const reason=typeof body.reason==="string"?body.reason.trim():"";
+    if(!reason||reason.length>500) return json(request,400,{error:"An administrator reason of 1–500 characters is required."});
     const result=await rpc(base,key,"mf_admin_set_account_status",{
-      p_actor_user_id:actor.id,p_target_user_id:targetId,p_status:route.endsWith("suspend-account")?"suspended":"active",
+      p_actor_user_id:actor.id,p_target_user_id:targetId,p_status:route.endsWith("suspend-account")?"suspended":"active",p_reason:reason,
     });
     return json(request,result===true?200:404,{ok:result===true});
   }
@@ -493,6 +525,11 @@ Deno.serve(async (request: Request) => {
     if (route==="order/status") {
       const user=await currentUser(base,key,request.headers.get("authorization")||"");
       return await orderStatus(request,base,key,user,await readJson(request));
+    }
+    if (route==="order/list") {
+      const user=await currentUser(base,key,request.headers.get("authorization")||"");
+      await limited(base,key,user.id+":order-list",20,60);
+      return await orderList(request,base,key,user);
     }
     if (route==="order/message") {
       const user=await currentUser(base,key,request.headers.get("authorization")||"");

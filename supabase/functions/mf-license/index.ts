@@ -418,12 +418,15 @@ async function adminOperation(base: string, key: string, actor: any, action: str
     });
     if (revoked !== true) return json(404, { error: "The active entitlement was not found." });
   } else if (action === "suspend-account" || action === "reactivate-account") {
+    const reason = typeof body.reason === "string" ? body.reason.trim() : "";
+    if (!reason || reason.length > 500) return json(400, { error: "An administrator reason of 1–500 characters is required." });
     const result = await rest(base, key, "rpc/mf_admin_set_account_status", {
       method: "POST",
       body: JSON.stringify({
         p_actor_user_id: actor.id,
         p_target_user_id: targetId,
         p_status: action === "suspend-account" ? "suspended" : "active",
+        p_reason: reason,
       }),
     });
     if (result !== true) return json(404, { error: "The account was not found or the status could not be changed." });

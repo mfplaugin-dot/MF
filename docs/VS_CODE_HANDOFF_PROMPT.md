@@ -60,6 +60,7 @@ Authenticated customer:
 - `POST /functions/v1/mf-platform/order/create`
 - `POST /functions/v1/mf-platform/order/receipt`
 - `POST /functions/v1/mf-platform/order/status`
+- `POST /functions/v1/mf-platform/order/list`
 - `POST /functions/v1/mf-platform/order/message`
 
 Admin:
@@ -86,15 +87,18 @@ License:
 - `POST /functions/v1/mf-license/validate`
 - Requires an authenticated Supabase user JWT, a 64-character lowercase SHA-256 device hash, and accepts `productSlug` (defaults to `mf-plugin`).
 
-## 4. Current known blockers
+## 4. Current known blockers (updated 2026-11-08)
 
-1. The Vite website still calls the legacy Azure API through `services/web/src/api.ts`. It is not yet connected to Supabase as its source of truth.
-2. The old website API contract includes custom order access tokens, customer/admin messages, and a fulfillment claim response. The new licensing model uses authenticated Supabase accounts and signed product-bound entitlements. Design a deliberate migration; do not fake old access tokens or return fake license keys.
+1. The Vite website now calls Supabase Auth and `mf-platform`; the legacy Azure API remains intact only as rollback/reference. Do not remove it until backend parity and an approved rollback plan exist.
+2. The local website supports catalog, checkout, account/order history, receipt upload, and admin product/lead/account/security/support modules. The latest `mf-platform` changes, including `order/list`, have not been deployed because the Supabase CLI was unauthenticated.
 3. There is no real owner/admin account in Staging. Existing E2E admin accounts have revoked test roles. Do not promote a test account. The owner must create/confirm their real Staging Auth account and then authorize the admin role assignment.
-4. SMTP/password recovery has not been configured or verified. Staging Auth's leaked-password protection is disabled. Report how to enable it; do not change Production Auth.
-5. GitHub Pages currently deploys Jekyll/root assets, not the Vite build in `services/web`. Do not switch the live site workflow until a tested Vite build and rollback path are ready.
-6. The actual Premiere plugin source/runtime has not been located or tested conclusively. Search for `CSXS/manifest.xml`, JSX/JSXBIN files, ZXP packaging, and plugin project folders. If the actual source is absent, ask the owner to open/provide the correct project folder. Do not invent a replacement plugin.
-7. IP/security event expiry is marked at 90 days, but deletion is not scheduled until the owner approves a privacy notice and retention policy.
+4. SMTP/sender verification and HTTPS recovery redirects are not configured or verified. Staging Auth leaked-password protection is disabled. The website now has a password-reset flow, but email delivery must be tested after SMTP setup.
+5. A Vite artifact-only workflow and local production build are ready; the current Jekyll live workflow remains unchanged. Do not publish or switch workflows without approval.
+6. The actual CEP extension exists in the local Adobe installation outside this repository. Product/device-bound entitlement checks were updated and plugin tests passed, but interactive Premiere login, activation, download, and timeline insertion were not tested.
+7. Order creation is intentionally blocked until an approved privacy notice and version are configured in each product's content. IP/security-event expiry is only a marker; no deletion is scheduled before owner approval.
+8. The local Git metadata is inaccessible in the current workspace, so local changes have not been committed or pushed. PR #1 remains Draft; do not bypass the repository's normal Git access controls.
+
+The website's `npm ci` and Vite production build passed. Legacy API tests passed 5/5, plugin tests passed 80/80, and both Edge Functions passed Deno checks. Browser preview could not connect to the local preview server. No Staging migration or latest-function deployment was performed in this phase.
 
 ## 5. Frontend integration tasks
 

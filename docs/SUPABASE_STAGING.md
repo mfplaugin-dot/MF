@@ -4,7 +4,7 @@
 
 - Staging project: `mfplugin-staging` — `bgyplclmucmkmajilhhs` (region `eu-west-2`).
 - Production project: `mfplugin` — `ymrvwzdqbaaodnozkgcm`.
-- All schema changes and Edge Function deployments described here were made to **Staging only**.
+- Historical Staging checks and deployments documented below targeted **Staging only**. The latest CLI deployment attempt could not authenticate, so do not treat local Edge Function edits as deployed.
 - Do not link, push migrations, deploy functions, rotate secrets, or change Auth settings on Production during development.
 - Keep Production untouched until the owner explicitly approves a separately reviewed release plan.
 
@@ -35,9 +35,9 @@ Amounts are stored as EGP minor units (piastres): 35000 and 150000.
 - `mf-cron-history-cleanup` removes Cron run history older than 7 days daily.
 - IP/security-event records are **not** automatically deleted; the 90-day expiry timestamp is a review/retention marker pending an approved privacy policy.
 
-## Staging Edge Functions
+## Staging Edge Functions — last known remote state
 
-### `mf-platform` (version 6, verify_jwt=false)
+### `mf-platform` (last known version 6, verify_jwt=false)
 
 Public:
 - `GET /functions/v1/mf-platform/catalog` (returns active product plans, product copy, and WhatsApp contact)
@@ -50,9 +50,10 @@ Authenticated customer:
 - `POST /functions/v1/mf-platform/order/create`
 - `POST /functions/v1/mf-platform/order/receipt`
 - `POST /functions/v1/mf-platform/order/status`
+- `POST /functions/v1/mf-platform/order/list`
 - `POST /functions/v1/mf-platform/order/message`
 
-Admin (requires Supabase Auth user with `app_metadata.role = admin`):
+Admin (requires Supabase Auth user with `app_metadata.role = admin`; local source includes the routes below, but deployment of the latest source is pending):
 - `POST /functions/v1/mf-platform/admin/overview`
 - `POST /functions/v1/mf-platform/admin/products`
 - `POST /functions/v1/mf-platform/admin/save-product`
@@ -84,14 +85,44 @@ Admin (requires Supabase Auth user with `app_metadata.role = admin`):
 
 ## Important remaining integration work
 
-1. The current Vite website still calls the legacy Azure API through `services/web/src/api.ts`. Replace that adapter with Supabase Auth + `mf-platform` calls; do not leave two sources of truth.
-2. Wire the visible website purchase form, WhatsApp click, customer order status, and admin dashboard to these endpoints.
-3. Create/confirm the owner's Auth user, then assign `app_metadata.role = admin` securely from a trusted admin context. No account matching the previously specified owner email was present in Staging during this pass; only E2E test users were found. Do not promote an arbitrary user.
-4. Configure and test SMTP / account recovery. Leaked-password protection is currently disabled in Staging Auth.
-5. The website must be built from `services/web` using Vite and published to the existing custom domain. Review the Pages workflow before changing it; do not replace the live site blindly.
-6. Add scheduled cleanup for expired security events and checkout sessions after an approved privacy-retention policy. The database currently marks IP event expiry at 90 days but does not automatically delete records.
-7. Update `mf-license` consumers in the actual Premiere plugin so the request sends the correct product slug and the plugin verifies the returned signed claims (including product and device binding).
-8. Complete browser, API, Deno, build, security, and real Premiere Pro end-to-end tests before calling this release-ready.
+1. The Vite website now uses Supabase Auth and `mf-platform`; the legacy Azure API remains intact for rollback/reference and is not the website source of truth.
+2. The latest local source adds authenticated `order/list`, customer password recovery, a privacy-notice gate, required account-status reasons, and expanded admin tools including customer support messages. These local changes are **not deployed** to Staging; a live smoke test returned 404 for `order/list`.
+3. The local Supabase CLI state is inaccessible from this sandbox. Restore CLI access in a trusted local session, verify the exact Staging project ref, then deploy only the explicitly authorized function. Do not paste tokens into chat.
+4. No owner Auth account has been verified for promotion. Verify the owner's identity before assigning `app_metadata.role = admin`; do not promote test accounts.
+5. Custom SMTP, sender/domain verification, recovery URLs, and leaked-password protection remain unverified. The website now supports reset requests, but signup/recovery delivery cannot be claimed until SMTP is configured and tested.
+6. Checkout is blocked unless approved privacy-notice text and version are configured in each product's structured content. The actual legal notice and retention policy require owner approval.
+7. The Vite artifact workflow is preview-only. The existing Jekyll workflow and live custom domain remain unchanged.
+8. The installed Premiere extension has product/device-bound signed-entitlement checks, but no real Premiere login, activation, download, or timeline test was completed.
+9. IP/security-event expiry is only a marker; no automatic deletion is configured. Do not schedule deletion before an approved policy.
+
+## Current live Staging smoke checks
+
+Read-only requests made to `bgyplclmucmkmajilhhs` during the latest local
+verification:
+
+- `GET /functions/v1/mf-platform/catalog`: HTTP 200; one active MF Plugin
+  product, Monthly EGP 350 / 30 days / one device, and Lifetime EGP 1,500 /
+  no expiry / one device.
+- Anonymous `POST /functions/v1/mf-platform/admin/overview`: HTTP 401
+  (`Sign-in required`).
+- Anonymous `POST /functions/v1/mf-license/validate`: HTTP 401 because no
+  Authorization header was supplied.
+- Anonymous PostgREST read of `mf_license_orders`: HTTP 401.
+- `POST /functions/v1/mf-platform/order/list`: HTTP 404 (`Unknown platform
+  operation`), confirming the latest local `mf-platform` has not been deployed.
+- An anonymous Storage list probe returned HTTP 400 and did not provide a
+  conclusive authorization result; private receipt access still needs the
+  read-only schema/policy check or an authenticated customer-isolation test.
+
+These requests did not create accounts/orders, change database state, or
+modify Auth, Storage, functions, or migrations. The current CLI session cannot
+deploy from this sandbox because its local Supabase CLI state is inaccessible.
+
+The new local migration
+`20261108200000_mf_admin_account_status_reason.sql` is not applied. It adds
+the reason-bearing account-status RPC expected by the local functions. Do not
+apply it independently of a compatible function rollout: the older deployed
+`mf-license` may still call the previous RPC signature.
 
 ## CLI and migration safety
 
@@ -113,4 +144,7 @@ The Staging database already contains prior remote migration history. Before run
 - Order price snapshots verified: 35000 minor EGP for Monthly and 150000 minor EGP for Lifetime.
 - Supabase security advisor after policy changes: only remaining warning is leaked-password protection disabled.
 - Performance advisor: no missing-FK-index finding; unused-index INFO notices are expected for newly created indexes before production traffic.
-- No browser invocation test or Premiere runtime test was available in this environment. Edge Function deployment status is ACTIVE, but client integration and end-to-end testing remain outstanding.
+- Supabase CLI deployment of the latest `mf-platform` source failed because the CLI was unauthenticated; no migration or remote function write was completed in that attempt.
+- Latest local checks: website `npm ci` and production build passed; legacy API tests passed (5/5); installed plugin tests passed (80/80); repository Edge Functions and the Staging-copy license function passed `deno check`. The local production preview server started, but browser and HTTP requests could not connect to its sandbox-local port.
+- Live Staging read-only smoke tests passed for the public catalog, anonymous admin rejection, anonymous license validation rejection, and direct anonymous order-table denial. The missing `order/list` route is a deployment blocker. Receipt-bucket authorization was inconclusive in the latest HTTP probe.
+- No migration was applied during the current integration work. The original five migration sources remain absent from this repository; reconcile history before any future `db push`.
