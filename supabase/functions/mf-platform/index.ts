@@ -117,11 +117,11 @@ async function productAndPlan(base: string, key: string, slug: string, code: str
   return { product, plan: plans[0] };
 }
 async function catalog(base: string, key: string): Promise<any> {
-  const products = await rest(base, key, "mf_products?select=id,slug,name,description,website_url&status=eq.active&order=created_at.desc");
+  const products = await rest(base, key, "mf_products?select=id,slug,name,description,website_url,support_whatsapp,content&status=eq.active&order=created_at.desc");
   const plans = await rest(base, key, "mf_product_plans?select=id,product_id,code,display_name,amount_minor,currency,billing_type,duration_days,device_limit&is_active=eq.true&order=amount_minor.asc");
   return {
     products: products.map((p: any) => ({
-      id: p.id, slug: p.slug, name: p.name, description: p.description, websiteUrl: p.website_url,
+      id: p.id, slug: p.slug, name: p.name, description: p.description, websiteUrl: p.website_url, supportWhatsapp: p.support_whatsapp, content: p.content,
       plans: plans.filter((plan: any) => plan.product_id === p.id).map((plan: any) => ({
         id: plan.id, code: plan.code, displayName: plan.display_name,
         price: Number(plan.amount_minor) / 100, currency: plan.currency,
@@ -182,7 +182,7 @@ async function updateCheckoutSession(request: Request, base: string, key: string
     method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify(patch),
   });
   if (!rows?.length) return json(request, 404, { error: "Checkout session not found." });
-  await recordEvent(request, base, key, nextStatus, rows[0].product_id, null, { sessionId: body.sessionId });
+  await recordEvent(request, base, key, nextStatus === "abandoned" ? "checkout_abandoned" : nextStatus, rows[0].product_id, null, { sessionId: body.sessionId });
   return json(request, 200, { updated: true });
 }
 async function createOrder(request: Request, base: string, key: string, user: any, body: Record<string, unknown>): Promise<Response> {
@@ -252,7 +252,7 @@ async function adminOrders(base: string, key: string, body: Record<string, unkno
   const allowed = ["uploading","pending","approved","rejected","upload_failed"];
   if (status && !allowed.includes(status)) throw Object.assign(new Error("Invalid order status filter."), { status: 400 });
   const query = new URLSearchParams({
-    select: "id,account_id,plan,status,created_at,reviewed_at,reviewed_by,receipt_path,product_id,plan_id",
+    select: "id,account_id,plan,status,created_at,reviewed_at,reviewed_by,receipt_path,product_id,plan_id,amount_minor,currency",
     order: "created_at.desc", limit: "100",
   });
   if (status) query.set("status", "eq." + status);
@@ -275,7 +275,7 @@ async function adminOrders(base: string, key: string, body: Record<string, unkno
       }
     }
     return { id: order.id, accountId: order.account_id, email, plan: order.plan, status: order.status,
-      createdAt: order.created_at, reviewedAt: order.reviewed_at, productId: order.product_id, planId: order.plan_id, receiptUrl };
+      createdAt: order.created_at, reviewedAt: order.reviewed_at, productId: order.product_id, planId: order.plan_id, amountMinor: order.amount_minor, currency: order.currency, receiptUrl };
   }));
   return { orders: result };
 }
@@ -325,7 +325,10 @@ async function adminAction(request: Request, base: string, key: string, actor: a
     if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||!name||name.length>120||description.length>4000||(websiteUrl&&!/^https:\/\//i.test(websiteUrl))) {
       return json(request,400,{error:"Enter a valid product slug, name, description, and HTTPS website URL."});
     }
-    const payload={slug,name,description,website_url:websiteUrl||null,status,updated_at:new Date().toISOString()};
+    const supportWhatsapp=typeof body.supportWhatsapp==="string"?body.supportWhatsapp.replace(/[^0-9]/g,""):"";
+    const content=body.content&&typeof body.content==="object"&&!Array.isArray(body.content)?body.content:{};
+    if(supportWhatsapp&&(supportWhatsapp.length<8||supportWhatsapp.length>15)) return json(request,400,{error:"Enter a valid WhatsApp number in international digits."});
+    const payload={slug,name,description,website_url:websiteUrl||null,support_whatsapp:supportWhatsapp||null,content,status,updated_at:new Date().toISOString()};
     const rows=isUuid(body.productId)
       ? await rest(base,key,"mf_products?id=eq."+body.productId,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify(payload)})
       : await rest(base,key,"mf_products",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify(payload)});
