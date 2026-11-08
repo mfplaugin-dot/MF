@@ -1,0 +1,5 @@
+[functions.mf-platform]
+verify_jwt = false
+
+[functions.mf-license]
+verify_jwt = true
