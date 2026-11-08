@@ -1,11 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
 import { api, apiUrl, Catalog } from "./api";
+import { SALES_CONFIG } from "./sales-config";
 
 type Lang = "ar" | "en";
 type BotMessage = { id: number; sender: "user" | "bot"; text: string };
 type BotTopic = { id: string; label: string; keywords: string[]; answer: string };
 const featureIcons = ["↗", "Aa", "✳", "T", "▦", "◫", "✦", "♫", "Ⅲ", "◇", "◌", "▣", "⌖", "⌘", "AI", "＋"];
-const WHATSAPP_NUMBER = "201016022870";
+const WHATSAPP_NUMBER = SALES_CONFIG.whatsappNumber;
 const botKnowledge: Record<Lang, { title: string; welcome: string; placeholder: string; send: string; whatsapp: string; fallback: string; topics: BotTopic[] }> = {
   en: {
     title: "MF assistant",
@@ -163,13 +164,10 @@ const copy = {
 };
 
 const publicCatalog: Catalog = {
-  plans: [
-    { id: "monthly", price: 350, deviceLimit: 1, durationDays: 30 },
-    { id: "lifetime", price: 1500, deviceLimit: 1, durationDays: null }
-  ],
-  paymentMethods: ["WhatsApp"],
-  paymentNumber: "01016022870",
-  currency: "EGP"
+  plans: SALES_CONFIG.plans,
+  paymentMethods: ["Manual transfer details via WhatsApp"],
+  paymentNumber: SALES_CONFIG.whatsappDisplayNumber,
+  currency: SALES_CONFIG.currency
 };
 
 export default function App() {
