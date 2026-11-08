@@ -243,16 +243,19 @@ async function uploadReceipt(request: Request, base: string, key: string, user: 
 }
 async function orderStatus(request: Request, base: string, key: string, user: any, body: Record<string, unknown>): Promise<Response> {
   if (!isUuid(body.orderId)) return json(request, 400, { error: "A valid order is required." });
-  const rows = await rest(base, key, "mf_license_orders?select=id,plan,status,created_at,reviewed_at,product_id&id=eq." + body.orderId + "&account_id=eq." + user.id + "&limit=1");
+  const rows = await rest(base, key, "mf_license_orders?select=id,plan,status,created_at,reviewed_at,review_note,product_id,plan_id,amount_minor,currency&id=eq." + body.orderId + "&account_id=eq." + user.id + "&limit=1");
   if (!rows?.length) return json(request, 404, { error: "Order not found." });
-  return json(request, 200, { order: rows[0] });
+  const messages=await rest(base,key,"mf_order_messages?select=sender_role,message,created_at&order_id=eq."+body.orderId+"&order=created_at.asc&limit=100");
+  const order=rows[0];
+  return json(request, 200, { status:order.status,reviewNote:order.review_note||null,plan:order.plan,priceEgp:Number(order.amount_minor)/100,currency:order.currency,
+    productId:order.product_id,messages:(messages||[]).map((m:any)=>({sender:m.sender_role,message:m.message,createdAt:m.created_at})) });
 }
 async function adminOrders(base: string, key: string, body: Record<string, unknown>): Promise<any> {
   const status = typeof body.status === "string" ? body.status : "";
   const allowed = ["uploading","pending","approved","rejected","upload_failed"];
   if (status && !allowed.includes(status)) throw Object.assign(new Error("Invalid order status filter."), { status: 400 });
   const query = new URLSearchParams({
-    select: "id,account_id,plan,status,created_at,reviewed_at,reviewed_by,receipt_path,product_id,plan_id,amount_minor,currency",
+    select: "id,account_id,plan,status,created_at,reviewed_at,reviewed_by,review_note,receipt_path,product_id,plan_id,amount_minor,currency",
     order: "created_at.desc", limit: "100",
   });
   if (status) query.set("status", "eq." + status);
@@ -275,7 +278,7 @@ async function adminOrders(base: string, key: string, body: Record<string, unkno
       }
     }
     return { id: order.id, accountId: order.account_id, email, plan: order.plan, status: order.status,
-      createdAt: order.created_at, reviewedAt: order.reviewed_at, productId: order.product_id, planId: order.plan_id, amountMinor: order.amount_minor, currency: order.currency, receiptUrl };
+      createdAt: order.created_at, reviewedAt: order.reviewed_at, reviewNote: order.review_note, productId: order.product_id, planId: order.plan_id, amountMinor: order.amount_minor, currency: order.currency, receiptUrl };
   }));
   return { orders: result };
 }
@@ -365,6 +368,20 @@ async function adminAction(request: Request, base: string, key: string, actor: a
     });
     if(!rows?.length) return json(request,404,{error:"Lead not found."});
     return json(request,200,{lead:rows[0]});
+  }
+  if (route === "admin/order-messages") {
+    if(!isUuid(body.orderId)) return json(request,400,{error:"A valid order is required."});
+    const exists=await rest(base,key,"mf_license_orders?select=id&id=eq."+body.orderId+"&limit=1");
+    if(!exists?.length) return json(request,404,{error:"Order not found."});
+    const messages=await rest(base,key,"mf_order_messages?select=sender_role,message,created_at&order_id=eq."+body.orderId+"&order=created_at.asc&limit=100");
+    return json(request,200,{messages:(messages||[]).map((m:any)=>({sender:m.sender_role,message:m.message,createdAt:m.created_at}))});
+  }
+  if (route === "admin/send-order-message") {
+    if(!isUuid(body.orderId)||typeof body.message!=="string"||!body.message.trim()||body.message.length>1000) return json(request,400,{error:"A valid order and message (1–1000 characters) are required."});
+    const exists=await rest(base,key,"mf_license_orders?select=id&id=eq."+body.orderId+"&limit=1");
+    if(!exists?.length) return json(request,404,{error:"Order not found."});
+    await rest(base,key,"mf_order_messages",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({order_id:body.orderId,sender_user_id:actor.id,sender_role:"admin",message:body.message.trim()})});
+    return json(request,201,{sent:true});
   }
   if (route === "admin/orders") return json(request,200,await adminOrders(base,key,body));
   if (route === "admin/inspect") return json(request,200,await adminInspect(base,key,String(body.targetUserId||"")));
@@ -476,6 +493,16 @@ Deno.serve(async (request: Request) => {
     if (route==="order/status") {
       const user=await currentUser(base,key,request.headers.get("authorization")||"");
       return await orderStatus(request,base,key,user,await readJson(request));
+    }
+    if (route==="order/message") {
+      const user=await currentUser(base,key,request.headers.get("authorization")||"");
+      const body=await readJson(request);
+      if(!isUuid(body.orderId)||typeof body.message!=="string"||!body.message.trim()||body.message.length>1000) return json(request,400,{error:"A valid order and message (1–1000 characters) are required."});
+      const owned=await rest(base,key,"mf_license_orders?select=id&id=eq."+body.orderId+"&account_id=eq."+user.id+"&limit=1");
+      if(!owned?.length) return json(request,404,{error:"Order not found."});
+      await limited(base,key,user.id+":order-message",10,60);
+      await rest(base,key,"mf_order_messages",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({order_id:body.orderId,sender_user_id:user.id,sender_role:"customer",message:body.message.trim()})});
+      return json(request,201,{sent:true});
     }
     return json(request,404,{error:"Unknown platform operation."});
   } catch (error) {
