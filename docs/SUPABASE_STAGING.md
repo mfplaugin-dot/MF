@@ -20,20 +20,27 @@ Amounts are stored as EGP minor units (piastres): 35000 and 150000.
 
 ## Central schema added
 
-- `mf_products`, `mf_product_plans`: multi-product catalog and price/device rules.
+- `mf_products`, `mf_product_plans`: multi-product catalog, editable WhatsApp support contact, structured product content, price/device rules.
 - `mf_checkout_leads`: contactable prospects and consent metadata.
 - `mf_checkout_sessions`: checkout progress, WhatsApp clicks, conversion/abandonment states.
 - `mf_security_events`: product/account/device/IP/user-agent events. IP expiry is marked at 90 days; no automatic purge schedule is configured yet.
 - Existing `mf_entitlements`, `mf_license_orders`, and `mf_license_devices` now carry product/plan references. Existing records were mapped to `mf-plugin`.
+- Orders snapshot the amount/currency at purchase time; entitlements snapshot the device limit so later catalog edits do not silently change existing purchases.
 - RLS is enabled on new tables. Public and authenticated direct access is denied; server access is through service-role Edge Functions only.
 - RPCs added for product order creation/review, admin overview, lead/event/product listings, product-specific grant, device revocation, and device activation.
 
+## Scheduled maintenance
+
+- `mf-platform-maintenance` runs every 15 minutes: marks expired monthly entitlements, stale unsubmitted receipt orders, and abandoned checkout sessions.
+- `mf-cron-history-cleanup` removes Cron run history older than 7 days daily.
+- IP/security-event records are **not** automatically deleted; the 90-day expiry timestamp is a review/retention marker pending an approved privacy policy.
+
 ## Staging Edge Functions
 
-### `mf-platform` (version 3, verify_jwt=false)
+### `mf-platform` (version 4, verify_jwt=false)
 
 Public:
-- `GET /functions/v1/mf-platform/catalog`
+- `GET /functions/v1/mf-platform/catalog` (returns active product plans, product copy, and WhatsApp contact)
 - `POST /functions/v1/mf-platform/lead`
 - `POST /functions/v1/mf-platform/checkout/session`
 - `POST /functions/v1/mf-platform/checkout/whatsapp-click`
@@ -91,10 +98,12 @@ The Staging database already contains prior remote migration history. Before run
 ## Verification snapshot
 
 - Staging project status: ACTIVE_HEALTHY.
-- New product catalog: 1 product, 2 plans.
+- New product catalog: 1 product, 2 plans; monthly EGP 350/30 days and Lifetime EGP 1,500/no expiry, both one device.
+- Product-specific activation and grant RPCs use the product's own entitlement and device limit; entitlement device limits and order prices are snapshotted.
 - Existing rows mapped: 4 entitlements, 2 orders, 3 devices; no missing product/plan references.
 - New tables have RLS enabled and explicit deny policies for anon/authenticated.
 - SQL smoke tests passed inside rolled-back transactions for admin overview/catalog/leads/security RPCs, order creation, lifetime order review, product-specific grant, and device activation.
+- Cron schedule verified active: maintenance every 15 minutes; cron history cleanup daily at 03:00 UTC.
 - Supabase security advisor after policy changes: only remaining warning is leaked-password protection disabled.
 - Performance advisor: no missing-FK-index finding; unused-index INFO notices are expected for newly created indexes before production traffic.
 - No browser invocation test or Premiere runtime test was available in this environment. Edge Function deployment status is ACTIVE, but client integration and end-to-end testing remain outstanding.
