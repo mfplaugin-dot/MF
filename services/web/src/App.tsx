@@ -81,9 +81,9 @@ const copy = {
     ],
     panelItems: ["Transitions", "Text animation", "Titles", "Sound effects", "Social media", "Project tools"],
     priceKicker: "SIMPLE, CLEAR PRICING", priceTitle: "Choose your access.", monthly: "Monthly", lifetime: "Lifetime", perMonth: "/ month", oneTime: "one time",
-    monthlyDesc: "For the editor in motion. One active device.", lifetimeDesc: "One purchase. Up to three active devices.", buy: "Choose plan",
+    monthlyDesc: "For the editor in motion. One active device for 30 days.", lifetimeDesc: "One purchase. No expiry. One active device per new license.", buy: "Choose plan",
     howTitle: "A human-reviewed purchase.", steps: ["Choose your plan and send a transfer", "Upload the receipt to your private order page", "Our team verifies the payment independently", "Your access appears securely after approval"],
-    paymentTitle: "Manual payment", paymentNote: "Confirm the recipient in your payment app before sending.", wallet: "InstaPay or Vodafone Cash",
+    paymentTitle: "Manual payment", paymentNote: "Contact MF on WhatsApp to confirm the manual bank or wallet transfer details before sending.", wallet: "Official WhatsApp contact",
     orderTitle: "Start your order", contact: "Contact method (phone or email)", contactPlaceholder: "How can we reach you?", plan: "Plan", receipt: "Payment receipt image (JPEG, PNG, WebP · max 5 MB)", submit: "Create private order", pendingWarning: "An uploaded image does not confirm payment. Your order stays pending until a person verifies the transfer.", whatsappRedirectNotice: "After your order is created, WhatsApp will open with your order reference, plan, and contact method prefilled. No receipt or private access key is sent.", message: "Message our team", send: "Send message",
     orderCreated: "Private order created", accessToken: "Save this private access key now. It is shown only once.", orderCode: "Order reference", submitReceipt: "Submit receipt", checkOrder: "Check order", claimAccess: "Retrieve approved access once", pending: "Pending manual payment review", paymentNotReceived: "Payment not received yet", approved: "Payment approved", rejected: "Payment rejected", orderStatus: "Order status",
     adminEntry: "•", adminTitle: "Administrator access", username: "Username", password: "Password", signIn: "Sign in", dashboard: "Review dashboard", signOut: "Sign out", pendingCount: "Pending", approvedCount: "Approved", rejectedCount: "Rejected", monthlyRevenue: "Monthly sales", lifetimeRevenue: "Lifetime sales", activeLicenses: "Active licenses", activeDevices: "Active devices", activeSubs: "Active monthly subscriptions", expiredSubs: "Expired monthly subscriptions", licenseManagement: "License management", revoke: "Revoke license", reviewAction: "Approve verified payment", notReceived: "Payment not received", reject: "Reject", verify: "I independently verified the transfer", noOrders: "No orders yet.", whatsappOff: "WhatsApp automation is disabled. Review orders here.",
@@ -134,9 +134,9 @@ const copy = {
     ],
     panelItems: ["الانتقالات", "تحريك النصوص", "العناوين", "المؤثرات الصوتية", "السوشيال ميديا", "أدوات المشروع"],
     priceKicker: "أسعار واضحة وبسيطة", priceTitle: "اختر طريقة الاستخدام.", monthly: "شهري", lifetime: "مدى الحياة", perMonth: "/ شهريًا", oneTime: "دفعة واحدة",
-    monthlyDesc: "للمونتير الذي يعمل باستمرار. جهاز نشط واحد.", lifetimeDesc: "شراء مرة واحدة. حتى ٣ أجهزة نشطة.", buy: "اختر الباقة",
+    monthlyDesc: "للمونتير الذي يعمل باستمرار. لمدة 30 يومًا على جهاز نشط واحد.", lifetimeDesc: "شراء مرة واحدة دون تاريخ انتهاء، لجهاز نشط واحد.", buy: "اختر الباقة",
     howTitle: "مراجعة بشرية للدفع.", steps: ["اختر الباقة وأرسل التحويل", "ارفع الإيصال في صفحة طلبك الخاصة", "نتحقق من التحويل بشكل مستقل", "يظهر وصولك بأمان بعد الموافقة"],
-    paymentTitle: "الدفع اليدوي", paymentNote: "تأكد من اسم المستلم داخل تطبيق الدفع قبل التحويل.", wallet: "InstaPay أو Vodafone Cash",
+    paymentTitle: "الدفع اليدوي", paymentNote: "تواصل مع MF عبر واتساب لتأكيد بيانات التحويل اليدوي قبل إرسال المبلغ.", wallet: "واتساب MF الرسمي",
     orderTitle: "ابدأ طلبك", contact: "وسيلة التواصل (هاتف أو بريد)", contactPlaceholder: "كيف يمكننا التواصل معك؟", plan: "الباقة", receipt: "صورة إيصال الدفع (JPEG أو PNG أو WebP · حتى ٥ ميجابايت)", submit: "إنشاء طلب خاص", pendingWarning: "رفع الصورة لا يؤكد الدفع. يظل طلبك قيد الانتظار حتى يتحقق شخص من التحويل.", whatsappRedirectNotice: "بعد إنشاء الطلب، سيفتح واتساب برسالة جاهزة تتضمن رقم الطلب والباقة ووسيلة التواصل. لن يُرسل الإيصال أو مفتاح الوصول الخاص.", message: "راسل فريقنا", send: "إرسال الرسالة",
     orderCreated: "تم إنشاء الطلب الخاص", accessToken: "احفظ مفتاح الوصول الخاص الآن. سيظهر مرة واحدة فقط.", orderCode: "رقم الطلب", submitReceipt: "إرسال الإيصال", checkOrder: "حالة الطلب", claimAccess: "استلام الوصول المعتمد مرة واحدة", pending: "بانتظار مراجعة الدفع يدويًا", paymentNotReceived: "لم يصل الدفع بعد", approved: "تمت الموافقة على الدفع", rejected: "تم رفض الدفع", orderStatus: "حالة الطلب",
     adminEntry: "•", adminTitle: "دخول الإدارة", username: "اسم المستخدم", password: "كلمة المرور", signIn: "دخول", dashboard: "لوحة مراجعة الطلبات", signOut: "خروج", pendingCount: "قيد المراجعة", approvedCount: "مقبول", rejectedCount: "مرفوض", monthlyRevenue: "مبيعات شهرية", lifetimeRevenue: "مبيعات مدى الحياة", activeLicenses: "تراخيص نشطة", activeDevices: "أجهزة نشطة", activeSubs: "اشتراكات شهرية نشطة", expiredSubs: "اشتراكات شهرية منتهية", licenseManagement: "إدارة التراخيص", revoke: "إلغاء الترخيص", reviewAction: "موافقة بعد التحقق", notReceived: "الدفع لم يصل", reject: "رفض", verify: "تحققت بنفسي من التحويل", noOrders: "لا توجد طلبات بعد.", whatsappOff: "أتمتة واتساب معطلة. راجع الطلبات هنا.",
@@ -165,9 +165,9 @@ const copy = {
 const publicCatalog: Catalog = {
   plans: [
     { id: "monthly", price: 350, deviceLimit: 1, durationDays: 30 },
-    { id: "lifetime", price: 1500, deviceLimit: 3, durationDays: null }
+    { id: "lifetime", price: 1500, deviceLimit: 1, durationDays: null }
   ],
-  paymentMethods: ["InstaPay", "Vodafone Cash"],
+  paymentMethods: ["WhatsApp"],
   paymentNumber: "01016022870",
   currency: "EGP"
 };
