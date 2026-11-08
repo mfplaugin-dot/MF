@@ -31,7 +31,7 @@ const validOrderToken = async (req: HttpRequest, orderId: string) => {
 app.http("health", { methods: ["GET"], authLevel: "anonymous", route: "health", handler: async () => json({ status: "ok" }) });
 app.http("catalog", { methods: ["GET"], authLevel: "anonymous", route: "catalog", handler: async () => json({
   plans: [{ id: "monthly", ...plans.monthly }, { id: "lifetime", ...plans.lifetime }],
-  paymentMethods: ["InstaPay", "Vodafone Cash"], paymentNumber: "01016022870", currency: "EGP"
+  paymentMethods: ["WhatsApp"], paymentNumber: "01016022870", currency: "EGP"
 }) });
 
 app.http("createOrder", { methods: ["POST"], authLevel: "anonymous", route: "orders", handler: async (req) => {

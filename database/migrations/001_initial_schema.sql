@@ -4,7 +4,7 @@ CREATE TABLE dbo.Orders (
   plan varchar(16) NOT NULL CHECK (plan IN ('monthly','lifetime')),
   contact nvarchar(160) NOT NULL,
   locale char(2) NOT NULL CHECK(locale IN ('ar','en')),
-  priceEgp int NOT NULL CHECK(priceEgp IN (200,1500)),
+  priceEgp int NOT NULL CHECK(priceEgp IN (350,1500)),
   status varchar(16) NOT NULL CHECK(status IN ('pending','approved','rejected')),
   customerTokenHash char(64) NOT NULL,
   customerTokenExpiresAt datetime2 NOT NULL,
