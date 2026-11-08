@@ -37,7 +37,7 @@ Amounts are stored as EGP minor units (piastres): 35000 and 150000.
 
 ## Staging Edge Functions
 
-### `mf-platform` (version 4, verify_jwt=false)
+### `mf-platform` (version 5, verify_jwt=false)
 
 Public:
 - `GET /functions/v1/mf-platform/catalog` (returns active product plans, product copy, and WhatsApp contact)
@@ -69,13 +69,14 @@ Admin (requires Supabase Auth user with `app_metadata.role = admin`):
 - `POST /functions/v1/mf-platform/admin/suspend-account`
 - `POST /functions/v1/mf-platform/admin/reactivate-account`
 
-### `mf-license` (version 3, verify_jwt=true)
+### `mf-license` (version 4, verify_jwt=true)
 
 - `POST /functions/v1/mf-license/validate`
 - Requires a Supabase user JWT and a 64-character lowercase SHA-256 device hash.
 - Optional `productSlug`; defaults to `mf-plugin`.
 - Resolves product-specific entitlements and device limits server-side.
 - Signs Ed25519 entitlement claims. Private signing key remains server-side.
+- CORS remains wildcard for this extension-facing endpoint because the Premiere/CEP runtime origin may not be the website domain; JWT verification and server-side entitlement/device checks are the security boundary.
 - Logs successful/denied validation and device-limit events with IP metadata.
 
 ## Important remaining integration work
@@ -100,10 +101,12 @@ The Staging database already contains prior remote migration history. Before run
 - Staging project status: ACTIVE_HEALTHY.
 - New product catalog: 1 product, 2 plans; monthly EGP 350/30 days and Lifetime EGP 1,500/no expiry, both one device.
 - Product-specific activation and grant RPCs use the product's own entitlement and device limit; entitlement device limits and order prices are snapshotted.
+- Product content and WhatsApp support contact are stored with the product catalog and exposed through the public catalog endpoint.
 - Existing rows mapped: 4 entitlements, 2 orders, 3 devices; no missing product/plan references.
 - New tables have RLS enabled and explicit deny policies for anon/authenticated.
 - SQL smoke tests passed inside rolled-back transactions for admin overview/catalog/leads/security RPCs, order creation, lifetime order review, product-specific grant, and device activation.
 - Cron schedule verified active: maintenance every 15 minutes; cron history cleanup daily at 03:00 UTC.
+- Order price snapshots verified: 35000 minor EGP for Monthly and 150000 minor EGP for Lifetime.
 - Supabase security advisor after policy changes: only remaining warning is leaked-password protection disabled.
 - Performance advisor: no missing-FK-index finding; unused-index INFO notices are expected for newly created indexes before production traffic.
 - No browser invocation test or Premiere runtime test was available in this environment. Edge Function deployment status is ACTIVE, but client integration and end-to-end testing remain outstanding.
