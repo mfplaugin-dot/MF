@@ -11,7 +11,7 @@ export function db(): Promise<sql.ConnectionPool> {
 
 export const plans = {
   monthly: { price: 350, deviceLimit: 1, durationDays: 30 },
-  lifetime: { price: 1500, deviceLimit: 3, durationDays: null }
+  lifetime: { price: 1500, deviceLimit: 1, durationDays: null }
 } as const;
 
 export async function audit(actor: string, action: string, orderId?: string): Promise<void> {
