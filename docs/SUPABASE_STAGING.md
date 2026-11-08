@@ -37,7 +37,7 @@ Amounts are stored as EGP minor units (piastres): 35000 and 150000.
 
 ## Staging Edge Functions
 
-### `mf-platform` (version 5, verify_jwt=false)
+### `mf-platform` (version 6, verify_jwt=false)
 
 Public:
 - `GET /functions/v1/mf-platform/catalog` (returns active product plans, product copy, and WhatsApp contact)
@@ -50,6 +50,7 @@ Authenticated customer:
 - `POST /functions/v1/mf-platform/order/create`
 - `POST /functions/v1/mf-platform/order/receipt`
 - `POST /functions/v1/mf-platform/order/status`
+- `POST /functions/v1/mf-platform/order/message`
 
 Admin (requires Supabase Auth user with `app_metadata.role = admin`):
 - `POST /functions/v1/mf-platform/admin/overview`
@@ -63,6 +64,8 @@ Admin (requires Supabase Auth user with `app_metadata.role = admin`):
 - `POST /functions/v1/mf-platform/admin/orders`
 - `POST /functions/v1/mf-platform/admin/inspect`
 - `POST /functions/v1/mf-platform/admin/review-order`
+- `POST /functions/v1/mf-platform/admin/order-messages`
+- `POST /functions/v1/mf-platform/admin/send-order-message`
 - `POST /functions/v1/mf-platform/admin/grant-entitlement`
 - `POST /functions/v1/mf-platform/admin/revoke-entitlement`
 - `POST /functions/v1/mf-platform/admin/revoke-device`
@@ -100,6 +103,7 @@ The Staging database already contains prior remote migration history. Before run
 
 - Staging project status: ACTIVE_HEALTHY.
 - New product catalog: 1 product, 2 plans; monthly EGP 350/30 days and Lifetime EGP 1,500/no expiry, both one device.
+- Order message read/write SQL smoke test passed in a rolled-back transaction.
 - Product-specific activation and grant RPCs use the product's own entitlement and device limit; entitlement device limits and order prices are snapshotted.
 - Product content and WhatsApp support contact are stored with the product catalog and exposed through the public catalog endpoint.
 - Existing rows mapped: 4 entitlements, 2 orders, 3 devices; no missing product/plan references.
