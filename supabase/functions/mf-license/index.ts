@@ -1,7 +1,7 @@
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://mf.mahmoudmostafa.online",
+  "Access-Control-Allow-Origin": "*",
   "Vary": "Origin",
-  "Access-Control-Allow-Headers": "authorization, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-supabase-api-version",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Content-Type": "application/json",
 };
